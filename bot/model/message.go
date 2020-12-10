@@ -25,6 +25,6 @@ type Message struct {
 	FileId   string
 }
 
-func StartSession(user *botAPI.User, uuid uint32) error {
-
+func StartSession(user *botAPI.User, uuid uint32) (Channel, error) {
+	return Channel{}, nil
 }

@@ -15,7 +15,7 @@ var bot *botAPI.BotAPI
 func StartBotAPI() error {
 	token := envy.Get("BOT_TOKEN", "")
 	if token == "" {
-		return errors.New("Bot token not found!")
+		return errors.New("bot token not found")
 	}
 	var err error
 	bot, err = botAPI.NewBotAPI(token)
@@ -32,6 +32,7 @@ func StartBotAPI() error {
 	updates, err := bot.GetUpdatesChan(u)
 	defer func() {
 		for update := range updates {
+			update := update
 			go func() {
 				defer func() {
 					if r := recover(); r != nil {
@@ -41,27 +42,24 @@ func StartBotAPI() error {
 				if update.ChannelPost != nil || update.EditedChannelPost != nil {
 					return
 				}
-				fmt.Println("in new go")
 				if update.CallbackQuery != nil {
 					if update.CallbackQuery.From.IsBot || model.CheckUser(update.CallbackQuery.From) != nil {
 						//todo send error message
 						return
 					}
-					fmt.Println("new 1")
 					handleCallback(update.CallbackQuery)
 				} else if update.Message.IsCommand() {
 					if update.Message.From.IsBot || model.CheckUser(update.Message.From) != nil {
 						//todo send error message
 						return
 					}
-					fmt.Println("new 2")
 					handleCommand(update.Message)
 				} else if update.Message != nil {
+					SendMessage(update.Message.Chat.ID, model.Message{Text: update.Message.Text, Type: model.TextMessage}, 0, nil)
 					if update.Message.From.IsBot || model.CheckUser(update.Message.From) != nil {
 						//todo send error message
 						return
 					}
-					fmt.Println("new 3")
 					handleMessage(update.Message)
 				}
 			}()
@@ -70,8 +68,7 @@ func StartBotAPI() error {
 	return nil
 }
 
-func SendMessage(chatId int64, message model.Message, replyId int, inline *botAPI.InlineKeyboardMarkup) {
-	//var msg botAPI.Chattable
+func SendMessage(chatId int64, message model.Message, replyId int, keyboard *KeyboardSettings) {
 	var err error
 	switch message.Type {
 	case model.TextMessage:
@@ -79,17 +76,26 @@ func SendMessage(chatId int64, message model.Message, replyId int, inline *botAP
 		if replyId > 0 {
 			msg.ReplyToMessageID = replyId
 		}
-		if inline != nil {
-			msg.ReplyMarkup = inline
+		if keyboard != nil {
+			if keyboard.UseInline {
+				msg.ReplyMarkup = keyboard.Inline
+			} else if keyboard.UseKeyboard {
+				msg.ReplyMarkup = keyboard.Keyboard
+			}
 		}
+		fmt.Println("after reply markup")
 		_, err = bot.Send(msg)
 	case model.VideoMessage:
 		msg := botAPI.NewVideoShare(chatId, message.FileId)
 		if replyId > 0 {
 			msg.ReplyToMessageID = replyId
 		}
-		if inline != nil {
-			msg.ReplyMarkup = inline
+		if keyboard != nil {
+			if keyboard.UseInline {
+				msg.ReplyMarkup = keyboard.Inline
+			} else if keyboard.UseKeyboard {
+				msg.ReplyMarkup = keyboard.Keyboard
+			}
 		}
 		_, err = bot.Send(msg)
 	case model.AudioMessage:
@@ -97,8 +103,12 @@ func SendMessage(chatId int64, message model.Message, replyId int, inline *botAP
 		if replyId > 0 {
 			msg.ReplyToMessageID = replyId
 		}
-		if inline != nil {
-			msg.ReplyMarkup = inline
+		if keyboard != nil {
+			if keyboard.UseInline {
+				msg.ReplyMarkup = keyboard.Inline
+			} else if keyboard.UseKeyboard {
+				msg.ReplyMarkup = keyboard.Keyboard
+			}
 		}
 		_, err = bot.Send(msg)
 	case model.VoiceMessage:
@@ -106,8 +116,12 @@ func SendMessage(chatId int64, message model.Message, replyId int, inline *botAP
 		if replyId > 0 {
 			msg.ReplyToMessageID = replyId
 		}
-		if inline != nil {
-			msg.ReplyMarkup = inline
+		if keyboard != nil {
+			if keyboard.UseInline {
+				msg.ReplyMarkup = keyboard.Inline
+			} else if keyboard.UseKeyboard {
+				msg.ReplyMarkup = keyboard.Keyboard
+			}
 		}
 		_, err = bot.Send(msg)
 	case model.PhotoMessage:
@@ -115,8 +129,12 @@ func SendMessage(chatId int64, message model.Message, replyId int, inline *botAP
 		if replyId > 0 {
 			msg.ReplyToMessageID = replyId
 		}
-		if inline != nil {
-			msg.ReplyMarkup = inline
+		if keyboard != nil {
+			if keyboard.UseInline {
+				msg.ReplyMarkup = keyboard.Inline
+			} else if keyboard.UseKeyboard {
+				msg.ReplyMarkup = keyboard.Keyboard
+			}
 		}
 		_, err = bot.Send(msg)
 	case model.ContactMessage:
@@ -124,13 +142,20 @@ func SendMessage(chatId int64, message model.Message, replyId int, inline *botAP
 			FirstName   string
 			PhoneNumber string
 		}
-		json.Unmarshal([]byte(message.MetaData), &c)
+		err = json.Unmarshal([]byte(message.MetaData), &c)
+		if err != nil {
+			panic(err.Error())
+		}
 		msg := botAPI.NewContact(chatId, c.PhoneNumber, c.FirstName)
 		if replyId > 0 {
 			msg.ReplyToMessageID = replyId
 		}
-		if inline != nil {
-			msg.ReplyMarkup = inline
+		if keyboard != nil {
+			if keyboard.UseInline {
+				msg.ReplyMarkup = keyboard.Inline
+			} else if keyboard.UseKeyboard {
+				msg.ReplyMarkup = keyboard.Keyboard
+			}
 		}
 		_, err = bot.Send(msg)
 	case model.StickerMessage:
@@ -138,8 +163,12 @@ func SendMessage(chatId int64, message model.Message, replyId int, inline *botAP
 		if replyId > 0 {
 			msg.ReplyToMessageID = replyId
 		}
-		if inline != nil {
-			msg.ReplyMarkup = inline
+		if keyboard != nil {
+			if keyboard.UseInline {
+				msg.ReplyMarkup = keyboard.Inline
+			} else if keyboard.UseKeyboard {
+				msg.ReplyMarkup = keyboard.Keyboard
+			}
 		}
 		_, err = bot.Send(msg)
 	case model.UnknownMessage:
@@ -147,8 +176,12 @@ func SendMessage(chatId int64, message model.Message, replyId int, inline *botAP
 		if replyId > 0 {
 			msg.ReplyToMessageID = replyId
 		}
-		if inline != nil {
-			msg.ReplyMarkup = inline
+		if keyboard != nil {
+			if keyboard.UseInline {
+				msg.ReplyMarkup = keyboard.Inline
+			} else if keyboard.UseKeyboard {
+				msg.ReplyMarkup = keyboard.Keyboard
+			}
 		}
 		_, err = bot.Send(msg)
 	case model.LocationMessage:
@@ -156,13 +189,20 @@ func SendMessage(chatId int64, message model.Message, replyId int, inline *botAP
 			Latitude  float64
 			Longitude float64
 		}
-		json.Unmarshal([]byte(message.MetaData), &c)
+		err = json.Unmarshal([]byte(message.MetaData), &c)
+		if err != nil {
+			panic(err)
+		}
 		msg := botAPI.NewLocation(chatId, c.Latitude, c.Longitude)
 		if replyId > 0 {
 			msg.ReplyToMessageID = replyId
 		}
-		if inline != nil {
-			msg.ReplyMarkup = inline
+		if keyboard != nil {
+			if keyboard.UseInline {
+				msg.ReplyMarkup = keyboard.Inline
+			} else if keyboard.UseKeyboard {
+				msg.ReplyMarkup = keyboard.Keyboard
+			}
 		}
 		_, err = bot.Send(msg)
 	case model.DocumentMessage:
@@ -171,19 +211,30 @@ func SendMessage(chatId int64, message model.Message, replyId int, inline *botAP
 		if replyId > 0 {
 			msg.ReplyToMessageID = replyId
 		}
-		if inline != nil {
-			msg.ReplyMarkup = inline
+		if keyboard != nil {
+			if keyboard.UseInline {
+				msg.ReplyMarkup = keyboard.Inline
+			} else if keyboard.UseKeyboard {
+				msg.ReplyMarkup = keyboard.Keyboard
+			}
 		}
 		_, err = bot.Send(msg)
 	case model.VideoNoteMessage:
 		var length int
-		json.Unmarshal([]byte(message.MetaData), &length)
+		err = json.Unmarshal([]byte(message.MetaData), &length)
+		if err != nil {
+			panic(err)
+		}
 		msg := botAPI.NewVideoNoteShare(chatId, length, message.FileId)
 		if replyId > 0 {
 			msg.ReplyToMessageID = replyId
 		}
-		if inline != nil {
-			msg.ReplyMarkup = inline
+		if keyboard != nil {
+			if keyboard.UseInline {
+				msg.ReplyMarkup = keyboard.Inline
+			} else if keyboard.UseKeyboard {
+				msg.ReplyMarkup = keyboard.Keyboard
+			}
 		}
 		_, err = bot.Send(msg)
 	}
