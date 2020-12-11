@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package adminyarProto;
+
+option go_package = "github.com/mrNobody95/adminyar";
+
+enum QueryType {
+  DELETE_CHANNEL = 0;
+  SELECT_CHANNEL = 1;
+  EDIT_CHANNEL_ID = 2;
+  GET_CHANNEL_LINK = 3;
+  EDIT_CHANNEL_NAME = 4;
+  BACK_TO_CHANNEL_LIST = 5;
+}
+
+message Query {
+  QueryType type = 1;
+  uint32 ChannelUuid = 2;
+}

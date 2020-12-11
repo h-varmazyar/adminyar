@@ -17,9 +17,11 @@ type User struct {
 type UserStatus int
 
 const (
-	Free           = 0
-	AddChannelId   = 1
-	AddChannelName = 2
+	Free            = 0
+	AddChannelId    = 1
+	EditChannelId   = 2
+	AddChannelName  = 3
+	EditChannelName = 4
 )
 
 func CheckUser(user *botAPI.User) error {

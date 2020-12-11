@@ -104,5 +104,7 @@ func handleMessage(message *botAPI.Message) {
 			}, 0, nil)
 		}
 		return
+	case model.EditChannelId:
+	case model.EditChannelName:
 	}
 }

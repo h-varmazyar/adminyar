@@ -263,3 +263,23 @@ func SendMessage(chatId int64, message model.Message, replyId int, keyboard *Key
 		panic(err.Error())
 	}
 }
+
+func EditMessage(chatId int64, text string, messageId int, isCaption bool, markup *botAPI.InlineKeyboardMarkup) {
+	var err error
+	if isCaption {
+		msg := botAPI.NewEditMessageCaption(chatId, messageId, text)
+		if markup != nil {
+			msg.ReplyMarkup = markup
+		}
+		_, err = bot.Send(msg)
+	} else {
+		msg := botAPI.NewEditMessageText(chatId, messageId, text)
+		if markup != nil {
+			msg.ReplyMarkup = markup
+		}
+		_, err = bot.Send(msg)
+	}
+	if err != nil {
+		panic(err.Error())
+	}
+}
