@@ -43,21 +43,41 @@ func StartBotAPI() error {
 					return
 				}
 				if update.CallbackQuery != nil {
-					if update.CallbackQuery.From.IsBot || model.CheckUser(update.CallbackQuery.From) != nil {
-						//todo send error message
+					err = model.CheckUser(update.CallbackQuery.From)
+					if update.CallbackQuery.From.IsBot || err != nil {
+						SendMessage(update.Message.Chat.ID, model.Message{
+							Text: err.Error(),
+							Type: model.TextMessage,
+						}, 0, &KeyboardSettings{
+							UseKeyboard: true,
+							Keyboard:    &WelcomeKeyboard,
+						})
 						return
 					}
 					handleCallback(update.CallbackQuery)
 				} else if update.Message.IsCommand() {
-					if update.Message.From.IsBot || model.CheckUser(update.Message.From) != nil {
-						//todo send error message
+					err = model.CheckUser(update.Message.From)
+					if update.Message.From.IsBot || err != nil {
+						SendMessage(update.Message.Chat.ID, model.Message{
+							Text: err.Error(),
+							Type: model.TextMessage,
+						}, 0, &KeyboardSettings{
+							UseKeyboard: true,
+							Keyboard:    &WelcomeKeyboard,
+						})
 						return
 					}
 					handleCommand(update.Message)
 				} else if update.Message != nil {
-					SendMessage(update.Message.Chat.ID, model.Message{Text: update.Message.Text, Type: model.TextMessage}, 0, nil)
-					if update.Message.From.IsBot || model.CheckUser(update.Message.From) != nil {
-						//todo send error message
+					err = model.CheckUser(update.Message.From)
+					if update.Message.From.IsBot || err != nil {
+						SendMessage(update.Message.Chat.ID, model.Message{
+							Text: err.Error(),
+							Type: model.TextMessage,
+						}, 0, &KeyboardSettings{
+							UseKeyboard: true,
+							Keyboard:    &WelcomeKeyboard,
+						})
 						return
 					}
 					handleMessage(update.Message)
@@ -70,6 +90,7 @@ func StartBotAPI() error {
 
 func SendMessage(chatId int64, message model.Message, replyId int, keyboard *KeyboardSettings) {
 	var err error
+	fmt.Println("sending message:" + message.Type)
 	switch message.Type {
 	case model.TextMessage:
 		msg := botAPI.NewMessage(chatId, message.Text)

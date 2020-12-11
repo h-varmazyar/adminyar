@@ -1,6 +1,8 @@
 package noSql
 
 import (
+	"errors"
+	"fmt"
 	"github.com/gobuffalo/envy"
 	"github.com/neo4j/neo4j-go-driver/neo4j"
 )
@@ -16,6 +18,12 @@ func Run() error {
 	driver, err = neo4j.NewDriver("bolt://localhost:7687", neo4j.BasicAuth(username, password, ""), configForNeo4j40)
 	if err != nil {
 		return err
+	}
+	if driver == nil {
+		fmt.Println("nil driver")
+		return errors.New("nil driver")
+	} else {
+		fmt.Println("not nil driver")
 	}
 
 	return addConstraints()
